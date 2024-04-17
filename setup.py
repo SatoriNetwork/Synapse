@@ -41,7 +41,7 @@ setup(
     dependency_links=[
         'git+https://github.com/SatoriNetwork/python-evrmorelib.git#egg=python-evrmorelib'
     ],
-    python_requires='>=3.9.5',
+    python_requires='>=3.7',
     author='Jordan Miller',
     author_email="jordan@satorinet.io",
     url=f'https://github.com/SatoriNetwork/{get_name()}',
