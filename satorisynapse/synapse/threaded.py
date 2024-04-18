@@ -28,7 +28,7 @@ import urllib.parse
 from satorisynapse.lib.error import SseTimeoutFailure
 from satorisynapse.lib.domain import Envelope, Ping, SYNAPSE_PORT
 from satorisynapse.lib.requests import requests
-from satorisynapse.lib.utils import greyPrint
+from satorisynapse.lib.utils import greyPrint, satoriUrl
 
 
 class Synapse():
@@ -41,10 +41,6 @@ class Synapse():
         self.peers: t.List[str] = []
         self.socket: socket.socket = self.createSocket()
         self.run()
-
-    @staticmethod
-    def satoriUrl(endpoint='') -> str:
-        return 'http://localhost:24601/synapse' + endpoint
 
     ### INIT ###
 
@@ -62,7 +58,7 @@ class Synapse():
 
     def listenToNeuron(self):
         try:
-            request = urllib.request.Request(Synapse.satoriUrl('/stream'))
+            request = urllib.request.Request(satoriUrl('/stream'))
             with urllib.request.urlopen(request) as response:
                 for line in response:
                     if not self.running:
@@ -160,7 +156,7 @@ class Synapse():
     def relayToNeuron(self, data: bytes, ip: str, port: int):
         try:
             response = requests.post(
-                Synapse.satoriUrl('/message'),
+                satoriUrl('/message'),
                 data=data,
                 headers={
                     'Content-Type': 'application/octet-stream',
@@ -189,19 +185,36 @@ class Synapse():
             self.neuronListener = None
 
 
-def waitForNeuron(notified: bool = False):
+def silentlyWaitForNeuron():
     while True:
         try:
-            r = requests.get(Synapse.satoriUrl('/ping'))
+            r = requests.get(satoriUrl('/ping'))
+            if r == 'ready':
+                return
             if r == 'ok':
+                return
+        except Exception as _:
+            pass
+        time.sleep(1)
+
+
+def waitForNeuron():
+    notified: bool = False
+    while True:
+        try:
+            r = requests.get(satoriUrl('/ping'))
+            if r == 'ready':
                 if notified:
                     greyPrint(
                         'established connection to Satori Neuron')
                 return
+            if r == 'ok' and not notified:
+                greyPrint('waiting for Satori Neuron...')
         except Exception as _:
-            if not notified:
-                greyPrint('waiting for Satori Neuron')
-                notified = True
+            pass
+        if not notified:
+            greyPrint('waiting for Satori Neuron...')
+            notified = True
         time.sleep(1)
 
 
@@ -209,7 +222,7 @@ def main(port: int = None):
     while True:
         waitForNeuron()
         try:
-            greyPrint("Satori P2P is running. Press Ctrl+C to stop.")
+            greyPrint("Satori Synapse is running. Press Ctrl+C to stop.")
             synapse = Synapse(port)
             synapse.listenToSocket()
         except KeyboardInterrupt:
@@ -219,14 +232,14 @@ def main(port: int = None):
         except Exception as _:
             pass
         finally:
-            greyPrint('Satori P2P is shutting down')
+            greyPrint('Satori Synapse is shutting down')
             synapse.shutdown()
             time.sleep(5)
 
 
 def runSynapse(port: int = None):
     try:
-        greyPrint('Synapse started')
+        greyPrint('Synapse started (threaded version)')
         main(port)
     except KeyboardInterrupt:
         greyPrint('Synapse exited by user')

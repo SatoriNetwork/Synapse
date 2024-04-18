@@ -4,3 +4,7 @@ def greyPrint(msg: str):
         + msg +
         "\033[0m"  # reset
     )
+
+
+def satoriUrl(endpoint='') -> str:
+    return 'http://localhost:24601/synapse' + endpoint

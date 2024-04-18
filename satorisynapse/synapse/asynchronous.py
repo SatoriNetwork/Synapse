@@ -15,8 +15,7 @@ import requests  # ==2.31.0
 import aiohttp  # ==3.8.4
 from satorisynapse.lib.error import SseTimeoutFailure
 from satorisynapse.lib.domain import Envelope, Ping, SYNAPSE_PORT
-from satorisynapse.lib.requests import requests
-from satorisynapse.lib.utils import greyPrint
+from satorisynapse.lib.utils import greyPrint, satoriUrl
 
 
 class Synapse():
@@ -31,10 +30,6 @@ class Synapse():
         self.socket: socket.socket = self.createSocket()
         self.loop = asyncio.get_event_loop()
         self.broke = asyncio.Event()
-
-    @staticmethod
-    def satoriUrl(endpoint='') -> str:
-        return 'http://localhost:24601/synapse' + endpoint
 
     ### INIT ###
 
@@ -55,7 +50,7 @@ class Synapse():
         timeout = aiohttp.ClientTimeout(total=None, sock_read=None)
         async with aiohttp.ClientSession(timeout=timeout) as session:
             try:
-                async with session.get(Synapse.satoriUrl('/stream')) as response:
+                async with session.get(satoriUrl('/stream')) as response:
                     async for line in response.content:
                         if line.startswith(b'data:'):
                             asyncio.create_task(
@@ -154,7 +149,7 @@ class Synapse():
     async def relayToNeuron(self, data: bytes, ip: str, port: int):
         try:
             async with self.session.post(
-                    Synapse.satoriUrl('/message'),
+                    satoriUrl('/message'),
                     data=data,
                     headers={
                         'Content-Type': 'application/octet-stream',
@@ -197,13 +192,13 @@ class Synapse():
         await self.cancelSocketListener()
         await self.cancelNeuronListener()
         self.socket.close()
-        greyPrint('Synapse shutdown complete.')
+        greyPrint('Satori Synapse shutdown complete.')
 
 
 def silentlyWaitForNeuron():
     while True:
         try:
-            r = requests.get(Synapse.satoriUrl('/ping'))
+            r = requests.get(satoriUrl('/ping'))
             if r.status_code == 200:
                 return
         except Exception as _:
@@ -217,14 +212,17 @@ async def main(port: int = None):
         notified = False
         while True:
             try:
-                r = requests.get(Synapse.satoriUrl('/ping'))
-                if r.status_code == 200:
+                r = requests.get(satoriUrl('/ping'))
+                if r.text == 'ready':
                     if notified:
-                        greyPrint('established connection to Satori Neuron')
+                        greyPrint(
+                            'established connection to Satori Neuron')
                     return
+                if r.text == 'ok' and not notified:
+                    greyPrint('waiting for Satori Neuron...')
             except Exception as _:
                 if not notified:
-                    greyPrint('waiting for Satori Neuron to start')
+                    greyPrint('waiting for Satori Neuron...')
                     notified = True
             await asyncio.sleep(1)
 
@@ -232,7 +230,7 @@ async def main(port: int = None):
         await waitForNeuron()
         synapse = Synapse(port)
         await synapse.run()
-        greyPrint("Satori P2P Relay is running. Press Ctrl+C to stop.")
+        greyPrint("Satori Synapse is running. Press Ctrl+C to stop.")
         try:
             await synapse.broke.wait()
             raise Exception('synapse not running')
@@ -248,9 +246,10 @@ async def main(port: int = None):
 
 def runSynapse(port: int = None):
     try:
+        greyPrint('Synapse started (async version)')
         asyncio.run(main(port))
     except KeyboardInterrupt:
-        print('Interrupted by user')
+        print('Synapse exited by user')
 
 
 if __name__ == '__main__':
