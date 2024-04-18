@@ -19,6 +19,10 @@ def get_name():
     return 'satorisynapse'
 
 
+def get_version():
+    return '0.0.6'
+
+
 def get_requirements():
     requirements = get_here('requirements.txt')
     if os.path.isfile(requirements):
@@ -27,30 +31,31 @@ def get_requirements():
     return []
 
 
-setup(
-    name=get_name(),
-    version=__version__,
-    description='satorisynapse contains domain model and apis for the Satori Network',
-    long_description=get_long_description(),
-    long_description_content_type="text/markdown",
-    packages=[f'{get_name()}.{p}' for p in find_packages(where=get_name())],
-    install_requires=get_requirements(),
-    dependency_links=[
-        'git+https://github.com/SatoriNetwork/python-evrmorelib.git#egg=python-evrmorelib'
-    ],
-    python_requires='>=3.7',
-    author='Jordan Miller',
-    author_email="jordan@satorinet.io",
-    url=f'https://github.com/SatoriNetwork/{get_name()}',
-    download_url=f'https://github.com/SatoriNetwork/{get_name()}',
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: Apache Software License",
-        "Operating System :: OS Independent",
-    ],
-    entry_points={
-        "console_scripts": [
-            f"{get_name()} = {get_name()}.cli:main",
-        ]
-    },
-)
+if __name__ == '__main__':
+    setup(
+        name=get_name(),
+        version=get_version(),
+        description='satorisynapse contains domain model and apis for the Satori Network',
+        long_description=get_long_description(),
+        long_description_content_type="text/markdown",
+        packages=[f'{get_name()}.{p}' for p in find_packages(where=get_name())],
+        install_requires=get_requirements(),
+        dependency_links=[
+            'git+https://github.com/SatoriNetwork/python-evrmorelib.git#egg=python-evrmorelib'
+        ],
+        python_requires='>=3.7',
+        author='Jordan Miller',
+        author_email="jordan@satorinet.io",
+        url=f'https://github.com/SatoriNetwork/{get_name()}',
+        download_url=f'https://github.com/SatoriNetwork/{get_name()}',
+        classifiers=[
+            "Programming Language :: Python :: 3",
+            "License :: OSI Approved :: Apache Software License",
+            "Operating System :: OS Independent",
+        ],
+        entry_points={
+            "console_scripts": [
+                f"{get_name()} = {get_name()}.cli:main",
+            ]
+        },
+    )
