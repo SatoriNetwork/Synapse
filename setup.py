@@ -1,6 +1,5 @@
 import os
 from setuptools import setup, find_packages
-from version import __version__
 
 
 def get_here(file: str):
@@ -38,7 +37,8 @@ if __name__ == '__main__':
         description='satorisynapse contains domain model and apis for the Satori Network',
         long_description=get_long_description(),
         long_description_content_type="text/markdown",
-        packages=[f'{get_name()}.{p}' for p in find_packages(where=get_name())],
+        packages=[f'{get_name()}.{p}' for p in find_packages(
+            where=get_name())],
         install_requires=get_requirements(),
         dependency_links=[
             'git+https://github.com/SatoriNetwork/python-evrmorelib.git#egg=python-evrmorelib'
