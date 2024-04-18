@@ -20,7 +20,7 @@ def get_name():
 
 
 def get_version():
-    return '0.0.7'
+    return '0.0.8'
 
 
 def get_requirements():
@@ -38,7 +38,7 @@ if __name__ == '__main__':
         description='satorisynapse contains domain model and apis for the Satori Network',
         long_description=get_long_description(),
         long_description_content_type="text/markdown",
-        #packages=[get_name()] + [f'{get_name()}.{p}' for p in find_packages(
+        # packages=[get_name()] + [f'{get_name()}.{p}' for p in find_packages(
         #    where=get_name())],
         packages=find_packages(),
         install_requires=get_requirements(),
