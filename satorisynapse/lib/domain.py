@@ -1,10 +1,7 @@
-import json
 import typing as t
+import json
 
-### CLASSES (coped from satorineuron.synergy.domain) ###
-
-# don't forget to use t.Dict in place of dict and t.Union inplace of Union
-# don't forget to comment out the references to Vesicle objects other than Ping
+SYNAPSE_PORT = 24600
 
 
 class Vesicle():

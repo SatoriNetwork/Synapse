@@ -14,7 +14,7 @@ import asyncio
 import requests  # ==2.31.0
 import aiohttp  # ==3.8.4
 from satorisynapse.lib.error import SseTimeoutFailure
-from satorisynapse.lib.domain import Envelope, Ping
+from satorisynapse.lib.domain import Envelope, Ping, SYNAPSE_PORT
 from satorisynapse.lib.requests import requests
 from satorisynapse.lib.utils import greyPrint
 
@@ -22,8 +22,8 @@ from satorisynapse.lib.utils import greyPrint
 class Synapse():
     ''' go-between for the flask server and the remote peers '''
 
-    def __init__(self, port: int = 24600):
-        self.port = port
+    def __init__(self, port: int = None):
+        self.port = port or SYNAPSE_PORT
         self.socketListener = None
         self.neuronListener = None
         self.peers: t.List[str] = []
@@ -211,7 +211,7 @@ def silentlyWaitForNeuron():
         time.sleep(1)
 
 
-async def main(port: int = 24600):
+async def main(port: int = None):
 
     async def waitForNeuron():
         notified = False
@@ -246,7 +246,7 @@ async def main(port: int = 24600):
             await synapse.shutdown()
 
 
-def runSynapse(port: int = 24600):
+def runSynapse(port: int = None):
     try:
         asyncio.run(main(port))
     except KeyboardInterrupt:

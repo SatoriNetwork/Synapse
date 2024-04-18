@@ -1,5 +1,6 @@
 import os
 from setuptools import setup, find_packages
+from version import __version__
 
 
 def get_here(file: str):
@@ -18,10 +19,6 @@ def get_name():
     return 'satorisynapse'
 
 
-def get_version():
-    return '0.0.5'
-
-
 def get_requirements():
     requirements = get_here('requirements.txt')
     if os.path.isfile(requirements):
@@ -32,7 +29,7 @@ def get_requirements():
 
 setup(
     name=get_name(),
-    version=get_version(),
+    version=__version__,
     description='satorisynapse contains domain model and apis for the Satori Network',
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
