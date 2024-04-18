@@ -3,6 +3,7 @@ from setuptools import setup, find_packages
 
 
 def get_here(file: str):
+    # return os.path.abspath(os.path.dirname(__file__))
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), file)
 
 
@@ -19,7 +20,7 @@ def get_name():
 
 
 def get_version():
-    return '0.0.6'
+    return '0.0.7'
 
 
 def get_requirements():
@@ -37,8 +38,9 @@ if __name__ == '__main__':
         description='satorisynapse contains domain model and apis for the Satori Network',
         long_description=get_long_description(),
         long_description_content_type="text/markdown",
-        packages=[f'{get_name()}.{p}' for p in find_packages(
-            where=get_name())],
+        #packages=[get_name()] + [f'{get_name()}.{p}' for p in find_packages(
+        #    where=get_name())],
+        packages=find_packages(),
         install_requires=get_requirements(),
         dependency_links=[
             'git+https://github.com/SatoriNetwork/python-evrmorelib.git#egg=python-evrmorelib'
