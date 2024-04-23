@@ -203,7 +203,7 @@ def silentlyWaitForNeuron():
                 return
         except Exception as _:
             pass
-        time.sleep(1)
+        time.sleep(10)
 
 
 async def main(port: int = None):
