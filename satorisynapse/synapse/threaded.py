@@ -19,14 +19,18 @@ neuron and relays messages to peers, and one that listens to the socket and
 relays messages from peers to the neuron.
 '''
 
-import typing as t
+import os
+import sys
 import time
-import threading
 import socket
-import urllib.request
+import platform
+import threading
+import subprocess
+import typing as t
 import urllib.parse
+import urllib.request
 from satorisynapse.lib.error import SseTimeoutFailure
-from satorisynapse.lib.domain import Envelope, Ping, SYNAPSE_PORT
+from satorisynapse.lib.domain import Envelope, Ping, Signal, SYNAPSE_PORT
 from satorisynapse.lib.requests import requests
 from satorisynapse.lib.utils import greyPrint, satoriUrl
 
@@ -34,8 +38,17 @@ from satorisynapse.lib.utils import greyPrint, satoriUrl
 class Synapse():
     ''' go-between for the flask server and the remote peers '''
 
-    def __init__(self, port: int = None):
+    def __init__(
+        self,
+        port: int = None,
+        version: str = None,
+        restartPath: str = None,
+        installDir: str = None,
+    ):
         self.port = port or SYNAPSE_PORT
+        self.version = version or 'v1',
+        self.restartPath = restartPath
+        self.installDir = installDir
         self.running = False
         self.neuronListener = None
         self.peers: t.List[str] = []
@@ -125,7 +138,67 @@ class Synapse():
     ### HANDLERS ###
 
     def handleNeuronMessage(self, message: str):
+
+        def handleSignal(signal: Signal):
+            if signal.restart:
+                greyPrint('restarting Satori Neuron...')
+                subprocess.Popen('docker stop satorineuron')
+                time.sleep(30)
+                if self.restartPath not in [None, '', 'none', 'null', 'None']:
+                    if platform.system() == "Windows" and (
+                        self.restartPath.endswith('.exe') or
+                        self.restartPath.endswith('.bat') or
+                        self.restartPath.endswith('.lnk')
+                    ):
+                        subprocess.Popen(
+                            f'start cmd.exe /k "{self.restartPath}"',
+                            shell=True)
+                    else:
+                        if platform.system() == "Windows":
+                            subprocess.Popen(
+                                f'start cmd.exe /k {sys.executable} "{self.restartPath}"',
+                                shell=True)
+                        elif platform.system() == "Darwin":
+                            # osascript -e 'tell application "Terminal" to do script "python3 /path/to/your_script.py"'
+                            escapedExecutable = sys.executable.replace(
+                                " ", "\\ ")
+                            escapedRestartPath = self.restartPath.replace(
+                                " ", "\\ ")
+                            subprocess.Popen(
+                                f"""osascript -e 'tell application "Terminal" to do script "{escapedExecutable} {escapedRestartPath}"'""",
+                                shell=True)
+                        elif platform.system() == "Linux":
+                            subprocess.Popen(
+                                ["gnome-terminal", "--", sys.executable, self.restartPath])
+                    try:
+                        self.shutdown()
+                    except Exception as _:
+                        pass
+                    exit()
+                elif self.installDir not in [None, '', 'none', 'null', 'None']:
+                    subprocess.Popen(
+                        f'docker pull satorinet/satorineuron:{self.version}')
+                    time.sleep(60)
+                    subprocess.Popen((
+                        'docker run --rm -it --name satorineuron '
+                        '-p 24601:24601 '
+                        f'-v {os.path.join(self.installDir, "wallet")}:/Satori/Neuron/wallet '
+                        f'-v {os.path.join(self.installDir, "config")}:/Satori/Neuron/config '
+                        f'-v {os.path.join(self.installDir, "data")}:/Satori/Neuron/data '
+                        f'-v {os.path.join(self.installDir, "models")}:/Satori/Neuron/models '
+                        '--env SATORI_RUN_MODE=prod '
+                        f'satorinet/satorineuron:{self.version} ./start.sh'),)
+                    raise Exception('restarting neuron...')
+            if signal.shutdown:
+                greyPrint('shutting down Satori Neuron...')
+                subprocess.Popen('docker stop satorineuron')
+                time.sleep(30)
+                self.shutdown()
+                exit()
+
         msg = Envelope.fromJson(message)
+        if msg.vesicle.className == 'Signal':
+            return handleSignal(msg.vesicle)
         self.maybeAddPeer(msg.ip)
         self.speak(
             remoteIp=msg.ip,
@@ -218,12 +291,21 @@ def waitForNeuron():
         time.sleep(1)
 
 
-def main(port: int = None):
+def main(
+    port: int = None,
+    version: str = None,
+    restartPath: str = None,
+    installDir: str = None,
+):
     while True:
         waitForNeuron()
         try:
             greyPrint("Satori Synapse is running. Press Ctrl+C to stop.")
-            synapse = Synapse(port)
+            synapse = Synapse(
+                port=port,
+                version=version,
+                restartPath=restartPath,
+                installDir=installDir)
             synapse.listenToSocket()
         except KeyboardInterrupt:
             pass
@@ -237,13 +319,43 @@ def main(port: int = None):
             time.sleep(5)
 
 
-def runSynapse(port: int = None):
+def runSynapse(
+    port: int = None,
+    version: str = None,
+    restartPath: str = None,
+    installDir: str = None,
+):
     try:
         greyPrint('Synapse started (threaded version)')
-        main(port)
+        main(port, version, restartPath, installDir)
     except KeyboardInterrupt:
         greyPrint('Synapse exited by user')
 
 
 if __name__ == '__main__':
-    runSynapse()
+    if len(sys.argv) == 5:
+        runSynapse(
+            port=sys.argv[1],
+            version=sys.argv[2],
+            restartPath=sys.argv[3],
+            installDir=sys.argv[4],)
+        exit(0)
+    if len(sys.argv) == 4:
+        runSynapse(
+            port=sys.argv[1],
+            version=sys.argv[2],
+            restartPath=sys.argv[3])
+        exit(0)
+    if len(sys.argv) == 3:
+        runSynapse(port=sys.argv[1], version=sys.argv[2])
+        exit(0)
+    if len(sys.argv) == 2:
+        if sys.argv[1] == 'help':
+            print(
+                'Usage: python3 runSynapse.py [port] [version (docker image version)] [restartPath]')
+        else:
+            runSynapse(port=sys.argv[1])
+    if len(sys.argv) == 1:
+        runSynapse()
+        exit(0)
+    exit(1)

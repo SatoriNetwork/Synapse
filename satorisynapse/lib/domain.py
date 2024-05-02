@@ -37,7 +37,7 @@ class Ping(Vesicle):
     ''' initial ping is False, response ping is True '''
 
     def __init__(self, ping: bool = False, **_kwargs):
-        super().__init__()
+        super().__init__(**_kwargs)
         self.ping = ping
 
     @staticmethod
@@ -67,6 +67,50 @@ class Ping(Vesicle):
     @property
     def isResponse(self):
         return self.ping
+
+
+class Signal(Vesicle):
+    ''' Signal the synapse to do something '''
+
+    def __init__(self, shutdown: bool = False, restart: bool = False, **_kwargs):
+        super().__init__(**_kwargs)
+        self.shutdown = shutdown
+        self.restart = restart
+
+    @staticmethod
+    def empty() -> 'Signal':
+        return Signal()
+
+    @staticmethod
+    def fromMessage(msg: bytes) -> 'Signal':
+        obj = Signal(**json.loads(msg.decode()
+                                  if isinstance(msg, bytes) else msg))
+        if obj.className == Signal.empty().className:
+            return obj
+        raise Exception('invalid object')
+
+    @property
+    def toDict(self):
+        return {
+            'shutdown': self.shutdown,
+            'restart': self.restart,
+            **super().toDict}
+
+    @property
+    def toJson(self):
+        return json.dumps(self.toDict)
+
+    @property
+    def isValid(self):
+        return isinstance(self.shutdown, bool) and isinstance(self.restart, bool)
+
+    @property
+    def isShutdown(self):
+        return self.shutdown
+
+    @property
+    def isRestart(self):
+        return self.restart
 
 
 class Envelope():

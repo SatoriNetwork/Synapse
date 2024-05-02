@@ -1,1 +1,1 @@
-from satorisynapse.lib.domain import Envelope, Vesicle, Ping
+from satorisynapse.lib.domain import Envelope, Vesicle, Ping, Signal

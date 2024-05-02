@@ -1,17 +1,46 @@
 import sys
 
 
-def run(type: str = 'threaded'):
+def run(
+    type: str = 'threaded',
+    port: str = None,
+    version: str = None,
+    restartPath: str = None,
+    installDir: str = None,
+):
     if type == 'threaded':
         from satorisynapse.synapse.threaded import runSynapse
     else:
         from satorisynapse.synapse.asynchronous import runSynapse
-    runSynapse()
+    runSynapse(
+        port=port,
+        version=version,
+        restartPath=restartPath,
+        installDir=installDir)
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        run(sys.argv[1])
+    if len(sys.argv) == 6:
+        run(type=sys.argv[1],
+            port=sys.argv[2],
+            version=sys.argv[3],
+            restartPath=sys.argv[4],
+            installDir=sys.argv[5])
+    if len(sys.argv) == 5:
+        run(type=sys.argv[1],
+            port=sys.argv[2],
+            version=sys.argv[3],
+            restartPath=sys.argv[4])
+    if len(sys.argv) == 4:
+        run(type=sys.argv[1],
+            port=sys.argv[2],
+            version=sys.argv[3])
+    if len(sys.argv) == 2:
+        if sys.argv[1] == 'help':
+            print(
+                "Usage: python3 -m satorisynapse.run ['threaded' or 'async'] [port number] [version (docker image version)] [restartPath] [installDir]")
+        else:
+            run(type=sys.argv[1])
         exit(0)
     run()
     exit(0)
