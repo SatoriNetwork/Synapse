@@ -335,7 +335,11 @@ def runSynapse(
 ):
     try:
         greyPrint('Synapse started (async version)')
-        asyncio.run(main(int(port), version, restartPath, installDir))
+        asyncio.run(main(
+            port=int(port) if isinstance(port, str) else port,
+            version=version,
+            restartPath=restartPath,
+            installDir=installDir))
     except KeyboardInterrupt:
         print('Synapse exited by user')
 

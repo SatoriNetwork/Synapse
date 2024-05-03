@@ -13,7 +13,7 @@ def run(
     else:
         from satorisynapse.synapse.asynchronous import runSynapse
     runSynapse(
-        port=int(port),
+        port=int(port) if isinstance(port, str) else port,
         version=version,
         restartPath=restartPath,
         installDir=installDir)
