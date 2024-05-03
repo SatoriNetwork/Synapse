@@ -20,7 +20,7 @@ def get_name():
 
 
 def get_version():
-    return '0.0.14'
+    return '0.0.115'
 
 
 def get_requirements():

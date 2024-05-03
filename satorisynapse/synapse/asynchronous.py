@@ -299,7 +299,8 @@ async def main(
                     notified = True
             await asyncio.sleep(1)
 
-    while True:
+    keepRunning = True
+    while keepRunning:
         await waitForNeuron()
         synapse = Synapse(
             port=port,
@@ -315,6 +316,10 @@ async def main(
             pass
         except SseTimeoutFailure:
             pass
+        except SystemExit as e:
+            print(e)
+            await synapse.shutdown()
+            keepRunning = False
         except Exception as _:
             pass
         finally:
