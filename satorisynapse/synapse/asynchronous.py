@@ -20,6 +20,8 @@ from satorisynapse.lib.error import SseTimeoutFailure
 from satorisynapse.lib.domain import Envelope, Ping, Signal, SYNAPSE_PORT
 from satorisynapse.lib.utils import greyPrint, satoriUrl
 
+keepRunning = True
+
 
 class Synapse():
     ''' go-between for the flask server and the remote peers '''
@@ -132,6 +134,7 @@ class Synapse():
     async def handleNeuronMessage(self, message: str):
 
         async def handleSignal(signal: Signal):
+            global keepRunning
             if msg.vesicle.restart:
                 greyPrint('restarting Satori Neuron...')
                 subprocess.Popen('docker stop satorineuron')
@@ -163,7 +166,8 @@ class Synapse():
                             subprocess.Popen(
                                 ["gnome-terminal", "--", sys.executable, self.restartPath])
                     self.broke.set()
-                    exit()
+                    # exit()
+                    keepRunning = False
                 elif self.installDir not in [None, '', 'none', 'null', 'None']:
                     subprocess.Popen(
                         f'docker pull satorinet/satorineuron:{self.version}')
@@ -182,7 +186,8 @@ class Synapse():
                 self.broke.set()
                 subprocess.Popen('docker stop satorineuron')
                 time.sleep(30)
-                exit()
+                # exit()
+                keepRunning = False
 
         msg = Envelope.fromJson(message)
         if msg.vesicle.className == 'Signal':
@@ -299,7 +304,6 @@ async def main(
                     notified = True
             await asyncio.sleep(1)
 
-    keepRunning = True
     while keepRunning:
         await waitForNeuron()
         synapse = Synapse(
@@ -316,14 +320,11 @@ async def main(
             pass
         except SseTimeoutFailure:
             pass
-        except SystemExit as e:
-            print(e)
-            await synapse.shutdown()
-            keepRunning = False
         except Exception as _:
             pass
         finally:
             await synapse.shutdown()
+    await synapse.shutdown()
 
 
 def runSynapse(
