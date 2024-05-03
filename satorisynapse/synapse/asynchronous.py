@@ -186,7 +186,7 @@ class Synapse():
 
         msg = Envelope.fromJson(message)
         if msg.vesicle.className == 'Signal':
-            return handleSignal(msg.vesicle)
+            return await handleSignal(msg.vesicle)
         await self.maybeAddPeer(msg.ip)
         await self.speak(
             remoteIp=msg.ip,
