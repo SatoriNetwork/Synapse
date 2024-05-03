@@ -327,7 +327,7 @@ def runSynapse(
 ):
     try:
         greyPrint('Synapse started (threaded version)')
-        main(port, version, restartPath, installDir)
+        main(int(port), version, restartPath, installDir)
     except KeyboardInterrupt:
         greyPrint('Synapse exited by user')
 
