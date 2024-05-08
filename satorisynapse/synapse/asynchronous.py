@@ -179,7 +179,7 @@ class Synapse():
                         f'-v {os.path.join(self.installDir, "config")}:/Satori/Neuron/config '
                         f'-v {os.path.join(self.installDir, "data")}:/Satori/Neuron/data '
                         f'-v {os.path.join(self.installDir, "models")}:/Satori/Neuron/models '
-                        '--env SATORI_RUN_MODE=prod '
+                        '--env ENV=prod '
                         f'satorinet/satorineuron:{self.version} ./start.sh'),)
             if msg.vesicle.shutdown:
                 greyPrint('shutting down Satori Neuron...')
