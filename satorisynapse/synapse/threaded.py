@@ -141,12 +141,20 @@ class Synapse():
 
     def handleNeuronMessage(self, message: str):
 
+        def getConfigEnv(configPath: str) -> str:
+            if os.path.exists(configPath):
+                with open(configPath, mode='r') as f:
+                    for line in f:
+                        if line.startswith('env:'):
+                            return line.split(':')[1].strip()
+            return 'prod'
+
         def handleSignal(signal: Signal):
             global keepRunning
             if signal.restart:
                 greyPrint('restarting Satori Neuron...')
-                subprocess.Popen('docker stop satorineuron')
-                time.sleep(30)
+                process = subprocess.Popen(['docker', 'stop', 'satorineuron'])
+                process.wait()
                 if self.restartPath not in [None, '', 'none', 'null', 'None']:
                     if platform.system() == "Windows" and (
                         self.restartPath.endswith('.exe') or
@@ -154,13 +162,11 @@ class Synapse():
                         self.restartPath.endswith('.lnk')
                     ):
                         subprocess.Popen(
-                            f'start cmd.exe /k "{self.restartPath}"',
-                            shell=True)
+                            ['start', 'cmd.exe', '/k', f'"{self.restartPath}"'])
                     else:
                         if platform.system() == "Windows":
                             subprocess.Popen(
-                                f'start cmd.exe /k {sys.executable} "{self.restartPath}"',
-                                shell=True)
+                                ['start', 'cmd.exe', '/k', f'{sys.executable}', f'"{self.restartPath}"'])
                         elif platform.system() == "Darwin":
                             # osascript -e 'tell application "Terminal" to do script "python3 /path/to/your_script.py"'
                             escapedExecutable = sys.executable.replace(
@@ -176,29 +182,32 @@ class Synapse():
                     try:
                         self.shutdown()
                     except Exception as _:
-                        pass
-                    # exit()
+                        exit()
                     keepRunning = False
                 elif self.installDir not in [None, '', 'none', 'null', 'None']:
-                    subprocess.Popen(
-                        f'docker pull satorinet/satorineuron:{self.version}')
-                    time.sleep(60)
-                    subprocess.Popen((
-                        'docker run --rm -it --name satorineuron '
-                        '-p 24601:24601 '
-                        f'-v {os.path.join(self.installDir, "wallet")}:/Satori/Neuron/wallet '
-                        f'-v {os.path.join(self.installDir, "config")}:/Satori/Neuron/config '
-                        f'-v {os.path.join(self.installDir, "data")}:/Satori/Neuron/data '
-                        f'-v {os.path.join(self.installDir, "models")}:/Satori/Neuron/models '
-                        '--env ENV=prod '
-                        f'satorinet/satorineuron:{self.version} ./start.sh'),)
+                    process = subprocess.Popen(
+                        ['docker', 'pull', f'satorinet/satorineuron:{self.version}'])
+                    process.wait()
+                    subprocess.Popen([
+                        'docker', 'run', '--rm', '-it', '--name', 'satorineuron',
+                        '-p', '24601:24601',
+                        '-v', f'{os.path.join(self.installDir, "wallet")}:/Satori/Neuron/wallet',
+                        '-v', f'{os.path.join(self.installDir, "config")}:/Satori/Neuron/config',
+                        '-v', f'{os.path.join(self.installDir, "data")}:/Satori/Neuron/data',
+                        '-v', f'{os.path.join(self.installDir, "models")}:/Satori/Neuron/models',
+                        '--env', f'ENV={getConfigEnv(os.path.join(self.installDir, "config", "config.yaml"))}',
+                        f'satorinet/satorineuron:{self.version}', './start.sh',
+                    ])
                     raise Exception('restarting neuron...')
             if signal.shutdown:
                 greyPrint('shutting down Satori Neuron...')
-                subprocess.Popen('docker stop satorineuron')
-                time.sleep(30)
+                process = subprocess.Popen(['docker', 'stop', 'satorineuron'])
+                process.wait()
                 self.shutdown()
-                # exit()
+                try:
+                    self.shutdown()
+                except Exception as _:
+                    exit()
                 keepRunning = False
 
         msg = Envelope.fromJson(message)
@@ -323,6 +332,7 @@ def main(
             synapse.shutdown()
             time.sleep(5)
     synapse.shutdown()
+    exit()
 
 
 def runSynapse(
