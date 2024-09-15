@@ -81,9 +81,9 @@ class Synapse():
     def createSocket(self) -> socket.socket:
         def waitBeforeRaise(seconds: int):
             '''
-            if this errors, but the neuron is reachable, it will immediately 
+            if this errors, but the neuron is reachable, it will immediately
             try again, and mostlikely fail for the same reason, such as perhaps
-            the port is bound elsewhere. So in order to avoid continual 
+            the port is bound elsewhere. So in order to avoid continual
             attempts and printouts we'll wait here before raising
             '''
             time.sleep(seconds)
@@ -184,11 +184,11 @@ class Synapse():
                     subprocess.Popen([
                         'docker', 'run', '--rm', '-it', '--name', 'satorineuron',
                         '-p', '24601:24601',
-                        '-v', f'{os.path.join(self.installDir, "wallet")}:/Satori/Neuron/wallet',
-                        '-v', f'{os.path.join(self.installDir, "config")}:/Satori/Neuron/config',
-                        '-v', f'{os.path.join(self.installDir, "data")}:/Satori/Neuron/data',
-                        '-v', f'{os.path.join(self.installDir, "models")}:/Satori/Neuron/models',
-                        '--env', f'ENV={getConfigEnv(os.path.join(self.installDir, "config", "config.yaml"))}',
+                        '-v', f'"{os.path.join(self.installDir, """wallet""")}:/Satori/Neuron/wallet"',
+                        '-v', f'"{os.path.join(self.installDir, """config""")}:/Satori/Neuron/config"',
+                        '-v', f'"{os.path.join(self.installDir, """data""")}:/Satori/Neuron/data"',
+                        '-v', f'"{os.path.join(self.installDir, """models""")}:/Satori/Neuron/models"',
+                        '--env', f'ENV="{getConfigEnv(os.path.join(self.installDir, """config""", """config.yaml"""))}"',
                         f'satorinet/satorineuron:{self.version}', './start.sh',
                     ])
                     raise Exception('restarting neuron...')

@@ -13,7 +13,7 @@ this is because we encountered an error:
 and it seemed this might be due to a python version issue:
 https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.sock_recvfrom
 given that we are unwilling to require a more recent version of python than 3.7
-we are going to use threads instead of asyncio. we will use this simplified 
+we are going to use threads instead of asyncio. we will use this simplified
 version on mac as well. luckily we only need 2 threads: one that listens to the
 neuron and relays messages to peers, and one that listens to the socket and
 relays messages from peers to the neuron.
@@ -93,9 +93,9 @@ class Synapse():
     def createSocket(self) -> socket.socket:
         def waitBeforeRaise(seconds: int):
             '''
-            if this errors, but the neuron is reachable, it will immediately 
+            if this errors, but the neuron is reachable, it will immediately
             try again, and mostlikely fail for the same reason, such as perhaps
-            the port is bound elsewhere. So in order to avoid continual 
+            the port is bound elsewhere. So in order to avoid continual
             attempts and printouts we'll wait here before raising
             '''
             time.sleep(seconds)
@@ -191,11 +191,11 @@ class Synapse():
                     subprocess.Popen([
                         'docker', 'run', '--rm', '-it', '--name', 'satorineuron',
                         '-p', '24601:24601',
-                        '-v', f'{os.path.join(self.installDir, "wallet")}:/Satori/Neuron/wallet',
-                        '-v', f'{os.path.join(self.installDir, "config")}:/Satori/Neuron/config',
-                        '-v', f'{os.path.join(self.installDir, "data")}:/Satori/Neuron/data',
-                        '-v', f'{os.path.join(self.installDir, "models")}:/Satori/Neuron/models',
-                        '--env', f'ENV={getConfigEnv(os.path.join(self.installDir, "config", "config.yaml"))}',
+                        '-v', f'"{os.path.join(self.installDir, """wallet""")}:/Satori/Neuron/wallet"',
+                        '-v', f'"{os.path.join(self.installDir, """config""")}:/Satori/Neuron/config"',
+                        '-v', f'"{os.path.join(self.installDir, """data""")}:/Satori/Neuron/data"',
+                        '-v', f'"{os.path.join(self.installDir, """models""")}:/Satori/Neuron/models"',
+                        '--env', f'ENV="{getConfigEnv(os.path.join(self.installDir, """config""", """config.yaml"""))}"',
                         f'satorinet/satorineuron:{self.version}', './start.sh',
                     ])
                     raise Exception('restarting neuron...')
